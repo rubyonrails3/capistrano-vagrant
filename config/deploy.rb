@@ -1,5 +1,5 @@
 # config valid only for Capistrano 3.1
-lock '3.2.1'
+# lock '3.2.0'
 
 set :application, 'capistrano_project'
 set :repo_url, 'git@github.com:rubyonrails3/capistrano-vagrant.git'
@@ -30,7 +30,6 @@ set :linked_files, %w{config/database.yml config/secrets.yml}
 set :linked_dirs, %w{bin log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
 
 # Default value for default_env is {}
-# set :default_env, { path: "/opt/ruby/bin:$PATH" }
 
 # Default value for keep_releases is 5
 set :keep_releases, 5
@@ -39,6 +38,7 @@ set :keep_releases, 5
 desc 'Check if agent forwarding is working'
 task :forwarding do
   on roles(:all) do |host|
+    execute 'ruby -v'
     if test("env | grep SSH_AUTH_SOCK")
       info "Agent forwarding is up to #{host}"
     else
@@ -48,6 +48,20 @@ task :forwarding do
 end
 
 namespace :deploy do
+
+  desc 'check config files in place'
+  task :check_symlinked do
+    on roles(:app) do |host|
+      if test("[ -f /etc/nginx/sites-enabled/#{fetch(:application)} ]")
+        info "Its there"
+      else
+        invoke "deploy:setup_config"
+        error "Its missing"
+      end
+    end
+  end
+
+  before :starting, :check_symlinked
 
   %w[start stop restart reload upgrade].each do |command|
     desc "#{command} unicorn server"
@@ -62,8 +76,8 @@ namespace :deploy do
   desc "symlinks web and app server configuration"
   task :setup_config do
     on roles(:app, :web) do |host|
-      execute "sudo ln -nfs #{current_path}/config/nginx.conf /etc/nginx/sites-enabled/#{fetch(:application)}"
-      execute "sudo ln -nfs #{current_path}/config/unicorn_init.sh /etc/init.d/unicorn_#{fetch(:application)}"
+      execute "sudo ln -nfs #{shared_path}/config/nginx.conf /etc/nginx/sites-enabled/#{fetch(:application)}"
+      execute "sudo ln -nfs #{shared_path}/config/unicorn_init.sh /etc/init.d/unicorn_#{fetch(:application)}"
     end
   end
 

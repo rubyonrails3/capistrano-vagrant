@@ -13,7 +13,7 @@
 # used to set extended properties on the server.
 
 #server 'example.com', user: 'deploy', roles: %w{web app}, my_property: :my_value
-server "vagrant@192.168.33.10", user: 'vagrant', port: 22, password: 'vagrant', roles: %w[web app db], primary: true
+server "vagrant@192.168.33.11", user: 'vagrant', port: 22, password: 'vagrant', roles: %w[web app db], primary: true
 
 
 # Custom SSH Options
